@@ -2,6 +2,7 @@ package com.example.lab_week_05
 import com.example.lab_week_05.api.CatApiService
 import android.os.Bundle
 import android.util.Log
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import retrofit2.Call
@@ -10,6 +11,9 @@ import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import com.example.lab_week_05.model.ImageData
+import com.example.lab_week_05.utils.GlideLoader
+import com.example.lab_week_05.utils.ImageLoader
+
 
 
 
@@ -31,6 +35,15 @@ class MainActivity : AppCompatActivity() {
         findViewById(R.id.api_response)
     }
 
+    private val imageResultView: ImageView by lazy {
+        findViewById(R.id.image_result)
+    }
+
+    private val imageLoader: ImageLoader by lazy {
+        GlideLoader(this)
+    }
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -40,6 +53,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun getCatImageResponse() {
         val call = catApiService.searchImages(1, "full")
+
         call.enqueue(object : Callback<List<ImageData>> {
             override fun onFailure(call: Call<List<ImageData>>, t: Throwable) {
                 Log.e(MAIN_ACTIVITY, "Failed to get response", t)
@@ -51,7 +65,14 @@ class MainActivity : AppCompatActivity() {
             ) {
                 if (response.isSuccessful) {
                     val image = response.body()
-                    val firstImage = image?.firstOrNull()?.imageUrl ?: "No URL"
+                    val firstImage = image?.firstOrNull()?.imageUrl.orEmpty()
+
+                    if (firstImage.isNotBlank()) {
+                        imageLoader.loadImage(firstImage, imageResultView)
+                    } else {
+                        Log.d(MAIN_ACTIVITY, "Missing image URL")
+                    }
+
                     apiResponseView.text = getString(R.string.image_placeholder, firstImage)
                 } else {
                     Log.e(
@@ -62,6 +83,7 @@ class MainActivity : AppCompatActivity() {
             }
         })
     }
+
 
 
     companion object {
